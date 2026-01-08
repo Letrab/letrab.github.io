@@ -796,7 +796,7 @@ create policy "Allow all" on tags for all using (true) with check (true);</pre>
         const taggedPeople = document.getElementById('taggedPeople');
         const liveIndicator = document.getElementById('liveIndicator');
         const toast = document.getElementById('toast');
-        const connectBtn = document.getElementById('connectBtn');
+        // const connectBtn = document.getElementById('connectBtn');
         const offlineBtn = document.getElementById('offlineBtn');
 
         // ========== UTILITIES ==========
@@ -824,8 +824,8 @@ create policy "Allow all" on tags for all using (true) with check (true);</pre>
                 return;
             }
 
-            connectBtn.disabled = true;
-            connectBtn.textContent = 'Connecting...';
+            // connectBtn.disabled = true;
+            // connectBtn.textContent = 'Connecting...';
 
             try {
                 supabaseClient = window.supabase.createClient(url, key);
@@ -850,8 +850,8 @@ create policy "Allow all" on tags for all using (true) with check (true);</pre>
             } catch (err) {
                 console.error(err);
                 showToast('Connection failed: ' + err.message);
-                connectBtn.disabled = false;
-                connectBtn.textContent = 'Connect & Start Tagging';
+                // connectBtn.disabled = false;
+                // connectBtn.textContent = 'Connect & Start Tagging';
             }
         }
 
@@ -1052,7 +1052,7 @@ create policy "Allow all" on tags for all using (true) with check (true);</pre>
         }
 
         // ========== EVENT LISTENERS ==========
-        connectBtn.addEventListener('click', connectSupabase);
+        // connectBtn.addEventListener('click', connectSupabase);
         offlineBtn.addEventListener('click', startOffline);
 
         photoWrapper.addEventListener('click', async (e) => {
