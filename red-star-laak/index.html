@@ -797,7 +797,7 @@ create policy "Allow all" on tags for all using (true) with check (true);</pre>
         const liveIndicator = document.getElementById('liveIndicator');
         const toast = document.getElementById('toast');
         // const connectBtn = document.getElementById('connectBtn');
-        const offlineBtn = document.getElementById('offlineBtn');
+        // const offlineBtn = document.getElementById('offlineBtn');
 
         // ========== UTILITIES ==========
         function generateId() {
@@ -1053,7 +1053,7 @@ create policy "Allow all" on tags for all using (true) with check (true);</pre>
 
         // ========== EVENT LISTENERS ==========
         // connectBtn.addEventListener('click', connectSupabase);
-        offlineBtn.addEventListener('click', startOffline);
+        // offlineBtn.addEventListener('click', startOffline);
 
         photoWrapper.addEventListener('click', async (e) => {
             if (e.target.closest('.tag-marker') || e.target.closest('.tag-input-popup') || e.target.closest('.zoom-controls')) return;
