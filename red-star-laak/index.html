@@ -650,8 +650,9 @@
             cursor: grab;
         }
 
-        .photo-wrapper.zoomed:active {
+        .photo-wrapper.zoomed.dragging {
             cursor: grabbing;
+            user-select: none;
         }
     </style>
 </head>
@@ -784,11 +785,13 @@ create policy "Allow all" on tags for all using (true) with check (true);</pre>
         let popup = null;
         let isOnline = false;
         let zoomLevel = 1;
+        let isDragging = false;
 
         // ========== DOM ELEMENTS ==========
         // const setupPanel = document.getElementById('setupPanel');
         const photoContainer = document.getElementById('photoContainer');
         const photoWrapper = document.getElementById('photoWrapper');
+        const photoScrollContainer = document.getElementById('photoScrollContainer');
         const thePhoto = document.getElementById('thePhoto');
         const totalTagsEl = document.getElementById('totalTags');
         const namedTagsEl = document.getElementById('namedTags');
@@ -1057,11 +1060,19 @@ create policy "Allow all" on tags for all using (true) with check (true);</pre>
 
         photoWrapper.addEventListener('click', async (e) => {
             if (e.target.closest('.tag-marker') || e.target.closest('.tag-input-popup') || e.target.closest('.zoom-controls')) return;
+            if (isDragging) return; // Don't create tag if we were dragging
             closePopup();
 
-            const rect = photoWrapper.getBoundingClientRect();
-            const x = ((e.clientX - rect.left) / rect.width) * 100;
-            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            // Get the photo's natural dimensions and current displayed size
+            const photoRect = thePhoto.getBoundingClientRect();
+            
+            // Calculate click position relative to the PHOTO (not wrapper), accounting for zoom
+            const clickX = e.clientX - photoRect.left;
+            const clickY = e.clientY - photoRect.top;
+            
+            // Convert to percentage of the original image (photoRect already includes zoom scaling)
+            const x = (clickX / photoRect.width) * 100;
+            const y = (clickY / photoRect.height) * 100;
 
             const newTag = {
                 id: generateId(),
@@ -1101,21 +1112,103 @@ create policy "Allow all" on tags for all using (true) with check (true);</pre>
         // Zoom controls
         document.getElementById('zoomIn').addEventListener('click', () => {
             zoomLevel = Math.min(zoomLevel + 0.5, 4);
-            thePhoto.style.transform = `scale(${zoomLevel})`;
-            thePhoto.style.transformOrigin = 'top left';
-            if (zoomLevel > 1) photoWrapper.classList.add('zoomed');
+            applyZoom();
         });
 
         document.getElementById('zoomOut').addEventListener('click', () => {
             zoomLevel = Math.max(zoomLevel - 0.5, 1);
-            thePhoto.style.transform = `scale(${zoomLevel})`;
-            if (zoomLevel === 1) photoWrapper.classList.remove('zoomed');
+            applyZoom();
         });
 
         document.getElementById('zoomReset').addEventListener('click', () => {
             zoomLevel = 1;
-            thePhoto.style.transform = 'scale(1)';
-            photoWrapper.classList.remove('zoomed');
+            applyZoom();
+            photoScrollContainer.scrollTo(0, 0);
+        });
+
+        function applyZoom() {
+            // Scale the wrapper itself, which contains both the image and the tags
+            photoWrapper.style.width = (100 * zoomLevel) + '%';
+            photoWrapper.style.transformOrigin = 'top left';
+            
+            if (zoomLevel > 1) {
+                photoWrapper.classList.add('zoomed');
+            } else {
+                photoWrapper.classList.remove('zoomed');
+            }
+        }
+
+        // Drag to pan when zoomed
+        let dragStartX, dragStartY, scrollStartX, scrollStartY;
+
+        photoWrapper.addEventListener('mousedown', (e) => {
+            if (zoomLevel <= 1) return;
+            if (e.target.closest('.tag-marker') || e.target.closest('.tag-input-popup') || e.target.closest('.zoom-controls')) return;
+            
+            isDragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            scrollStartX = photoScrollContainer.scrollLeft;
+            scrollStartY = photoScrollContainer.scrollTop;
+            photoWrapper.classList.add('dragging');
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            const dx = e.clientX - dragStartX;
+            const dy = e.clientY - dragStartY;
+            
+            photoScrollContainer.scrollLeft = scrollStartX - dx;
+            photoScrollContainer.scrollTop = scrollStartY - dy;
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (isDragging) {
+                // Small threshold to distinguish drag from click
+                const dx = Math.abs(e.clientX - dragStartX);
+                const dy = Math.abs(e.clientY - dragStartY);
+                
+                // If we moved more than 5px, it was a drag, not a click
+                setTimeout(() => {
+                    isDragging = false;
+                    photoWrapper.classList.remove('dragging');
+                }, 10);
+                
+                if (dx > 5 || dy > 5) {
+                    // Prevent the click event from firing
+                    e.stopPropagation();
+                }
+            }
+        });
+
+        // Touch support for mobile drag
+        photoWrapper.addEventListener('touchstart', (e) => {
+            if (zoomLevel <= 1) return;
+            if (e.target.closest('.tag-marker') || e.target.closest('.tag-input-popup') || e.target.closest('.zoom-controls')) return;
+            
+            const touch = e.touches[0];
+            isDragging = true;
+            dragStartX = touch.clientX;
+            dragStartY = touch.clientY;
+            scrollStartX = photoScrollContainer.scrollLeft;
+            scrollStartY = photoScrollContainer.scrollTop;
+        }, { passive: true });
+
+        photoWrapper.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            
+            const touch = e.touches[0];
+            const dx = touch.clientX - dragStartX;
+            const dy = touch.clientY - dragStartY;
+            
+            photoScrollContainer.scrollLeft = scrollStartX - dx;
+            photoScrollContainer.scrollTop = scrollStartY - dy;
+        }, { passive: true });
+
+        photoWrapper.addEventListener('touchend', () => {
+            isDragging = false;
         });
 
         // ========== AUTO-CONNECT ==========
