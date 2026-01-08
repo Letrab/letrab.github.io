@@ -486,6 +486,45 @@
             animation: pulse 1.5s infinite;
         }
 
+        /* Toggle tags button */
+        .btn-toggle-tags {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-toggle-tags:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-gold);
+        }
+
+        .btn-toggle-tags.tags-hidden {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            border-color: var(--accent-gold);
+        }
+
+        .btn-toggle-tags svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Hidden tags state */
+        .photo-wrapper.tags-hidden .tag-marker {
+            opacity: 0;
+            pointer-events: none;
+        }
+
         /* Instructions */
         .instructions {
             display: flex;
@@ -732,6 +771,13 @@ create policy "Allow all" on tags for all using (true) with check (true);</pre>
                         <div class="stat-label">Named</div>
                     </div>
                 </div>
+                <button class="btn-toggle-tags" id="toggleTagsBtn">
+                    <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <span>Hide Tags</span>
+                </button>
                 <div class="live-indicator" id="liveIndicator">
                     <div class="live-dot"></div>
                     <span>Live sync enabled</span>
@@ -1121,6 +1167,30 @@ create policy "Allow all" on tags for all using (true) with check (true);</pre>
 
         document.addEventListener('click', (e) => {
             if (popup && !popup.contains(e.target)) closePopup();
+        });
+
+        // Toggle tags visibility
+        const toggleTagsBtn = document.getElementById('toggleTagsBtn');
+        let tagsVisible = true;
+
+        toggleTagsBtn.addEventListener('click', () => {
+            tagsVisible = !tagsVisible;
+            photoWrapper.classList.toggle('tags-hidden', !tagsVisible);
+            toggleTagsBtn.classList.toggle('tags-hidden', !tagsVisible);
+            toggleTagsBtn.querySelector('span').textContent = tagsVisible ? 'Hide Tags' : 'Show Tags';
+            
+            // Update icon
+            if (tagsVisible) {
+                toggleTagsBtn.querySelector('svg').innerHTML = `
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                `;
+            } else {
+                toggleTagsBtn.querySelector('svg').innerHTML = `
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                `;
+            }
         });
 
         // Zoom controls - max 2.5x (default + 3 clicks)
